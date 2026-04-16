@@ -11,7 +11,7 @@ export const CATEGORIES: Category[] = [
     label: 'Global',
     feeds: [
       { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', primary: true },
-      { url: 'https://feeds.reuters.com/reuters/worldNews', primary: true },
+      { url: 'https://feeds.bbci.co.uk/news/rss.xml', primary: true },
       { url: 'https://www.aljazeera.com/xml/rss/all.xml', primary: false },
     ],
   },
@@ -29,18 +29,24 @@ export const CATEGORIES: Category[] = [
     id: 'business',
     label: 'Business',
     feeds: [
-      { url: 'https://economictimes.indiatimes.com/rssfeedstopstories.cms', primary: true },
-      { url: 'https://www.moneycontrol.com/rss/top_headlines.xml', primary: true },
-      { url: 'https://www.hindustantimes.com/feeds/rss/business/rssfeed.xml', primary: false },
+      // Reuters Business — reliably includes media:thumbnail images
+      { url: 'https://feeds.reuters.com/reuters/businessNews', primary: true },
+      // Livemint — good Indian business coverage with images
+      { url: 'https://www.livemint.com/rss/money', primary: true },
+      // ET as fallback — text-only but good headlines
+      { url: 'https://economictimes.indiatimes.com/rssfeedstopstories.cms', primary: false },
     ],
   },
   {
     id: 'technology',
     label: 'Technology',
     feeds: [
-      { url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', primary: true },
+      // TechCrunch — includes enclosure images reliably
       { url: 'https://techcrunch.com/feed/', primary: true },
-      { url: 'https://www.theverge.com/rss/index.xml', primary: false },
+      // Ars Technica — excellent images in feed
+      { url: 'https://feeds.arstechnica.com/arstechnica/index', primary: true },
+      // BBC Tech as fallback — consistent BBC images
+      { url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', primary: false },
     ],
   },
   {
