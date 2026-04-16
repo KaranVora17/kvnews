@@ -197,6 +197,7 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
   const withTrending = markTrending(deduped, allItems)
 
   return withTrending
+    .filter(item => item.image !== null)
     .sort((a, b) => a.ageMinutes - b.ageMinutes)
     .slice(0, 10)
 }
