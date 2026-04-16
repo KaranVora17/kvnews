@@ -67,16 +67,11 @@ export default function NewsFeed({ category }: Props) {
           typeof data.error === 'string' ? data.error : `Could not load news (${res.status}).`
         )
         setItems([])
-        setBreaking(null)
         setUpdatedAt('')
         return
       }
 
       setItems(data.items || [])
-
-      const list = (data.items || []) as NewsItem[]
-      const b = list.find((i: NewsItem) => i.breaking)
-      setBreaking(b ?? null)
 
       const meta = data.meta
       const fetchedAt = data.fetchedAt
@@ -84,7 +79,6 @@ export default function NewsFeed({ category }: Props) {
     } catch {
       setLoadError('Network error. Check your connection and try again.')
       setItems([])
-      setBreaking(null)
       setUpdatedAt('')
     } finally {
       setLoading(false)
@@ -92,8 +86,16 @@ export default function NewsFeed({ category }: Props) {
   }, [category])
 
   useEffect(() => {
+    setDismissed(false)
+    setBreaking(null)
     void load()
-  }, [load])
+  }, [category, load])
+
+  useEffect(() => {
+    if (loading || dismissed) return
+    const b = items.find(i => i.breaking) ?? null
+    setBreaking(b)
+  }, [items, dismissed, loading])
 
   if (loading) {
     return (
@@ -168,7 +170,7 @@ export default function NewsFeed({ category }: Props) {
           Updated {updatedAt}
         </div>
 
-        <NewsCard item={hero} variant="hero" onClick={setModal} />
+        <NewsCard item={hero} variant="hero" onClick={setModal} category={category} />
 
         {[row1, row2].map((row, ri) => (
           row.length > 0 && (
@@ -179,7 +181,7 @@ export default function NewsFeed({ category }: Props) {
               marginBottom: 12,
             }}>
               {row.map(item => (
-                <NewsCard key={item.id} item={item} variant="small" onClick={setModal} />
+                <NewsCard key={item.id} item={item} variant="small" onClick={setModal} category={category} />
               ))}
             </div>
           )
@@ -190,17 +192,16 @@ export default function NewsFeed({ category }: Props) {
 
       <style>{`
         @media (max-width: 600px) {
-          .hero-img {
+          .news-card-hero {
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 0;
+          }
+          .news-card-hero .hero-img {
             width: 100% !important;
             min-width: unset !important;
             height: 180px !important;
-          }
-          .hero-img ~ div {
-            flex-direction: column !important;
-          }
-          [class*="hero"] > div:first-child {
-            width: 100% !important;
-            min-width: unset !important;
+            align-self: stretch !important;
           }
         }
       `}</style>
