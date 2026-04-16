@@ -8,17 +8,15 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
-  if (!secret) {
-    return NextResponse.json({ error: 'Cron not configured' }, { status: 503 })
-  }
+  if (!secret) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
 
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Force fresh fetch for all categories — bypasses cache
   const results: Record<string, number> = {}
+
   await Promise.all(
     CATEGORIES.map(async (cat) => {
       const items = await fetchCategory(cat)

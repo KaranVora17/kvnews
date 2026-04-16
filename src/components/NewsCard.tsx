@@ -156,7 +156,7 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
       <StoryImage
         src={img}
         alt=""
-        sizes="(max-width: 600px) 50vw, 220px"
+        sizes="(max-width: 900px) 33vw, 280px"
         fallbackSrc={fallback}
         wrapperStyle={{ height: 110, background: 'var(--bdr)' }}
       />

@@ -198,5 +198,5 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
 
   return withTrending
     .sort((a, b) => a.ageMinutes - b.ageMinutes)
-    .slice(0, 5)
+    .slice(0, 10)
 }

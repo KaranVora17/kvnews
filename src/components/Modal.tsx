@@ -45,6 +45,7 @@ export default function Modal({ item, onClose }: Props) {
           src={src}
           alt=""
           sizes="(max-width: 640px) 100vw, 640px"
+          fallbackSrc={STORY_IMAGE_FALLBACK}
           wrapperStyle={{ height: 220, background: 'var(--bdr)' }}
         />
 
@@ -104,6 +105,7 @@ export default function Modal({ item, onClose }: Props) {
               Read full story →
             </a>
             <button
+              type="button"
               onClick={handleShare}
               style={{
                 padding: '10px 16px',
@@ -116,6 +118,7 @@ export default function Modal({ item, onClose }: Props) {
               Share
             </button>
             <button
+              type="button"
               onClick={onClose}
               style={{
                 padding: '10px 16px',
