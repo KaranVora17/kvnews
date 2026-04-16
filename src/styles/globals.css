@@ -1,0 +1,126 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Theme variables ─────────────────────────────────────────
+   Three themes: morning (warm), day (cool), evening (slate)
+   Each has exactly three shades + one accent
+──────────────────────────────────────────────────────────── */
+:root,
+[data-theme="morning"] {
+  --bg:     #FAF7F4;
+  --sur:    #FFFFFF;
+  --acc:    #B34F00;
+  --tx:     #1A1A1A;
+  --mu:     #767676;
+  --bdr:    #E8E2DC;
+  --ti:     #767676;   /* tab inactive text */
+}
+
+[data-theme="day"] {
+  --bg:     #F3F6FB;
+  --sur:    #FFFFFF;
+  --acc:    #1A4FCC;
+  --tx:     #0D0D0D;
+  --mu:     #6B7280;
+  --bdr:    #DDE3EE;
+  --ti:     #6B7280;
+}
+
+[data-theme="evening"] {
+  --bg:     #1C2333;
+  --sur:    #253047;
+  --acc:    #60A5FA;
+  --tx:     #E2EAF8;
+  --mu:     #8BA4C8;
+  --bdr:    #2E3D5A;
+  --ti:     #C8D8F0;   /* bright so tabs are visible on dark */
+}
+
+/* ── Focus (keyboard) ───────────────────────────────────── */
+.theme-swatch:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* ── Transitions ──────────────────────────────────────────── */
+body {
+  background: var(--bg);
+  color: var(--tx);
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bdr); border-radius: 3px; }
+
+/* ── Modal overlay ────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-box {
+  background: var(--sur);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Breaking banner ─────────────────────────────────────── */
+.breaking-banner {
+  background: var(--acc);
+  color: var(--sur);
+  padding: 9px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+.breaking-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sur);
+  animation: blink 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
