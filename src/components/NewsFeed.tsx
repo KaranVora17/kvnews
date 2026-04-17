@@ -62,7 +62,6 @@ export default function NewsFeed({ category }: Props) {
     setBreaking(items.find(i => i.breaking) ?? null)
   }, [items, dismissed, loading])
 
-  /* ── Loading ── */
   if (loading) return (
     <div style={{ padding: '48px 0', textAlign: 'center' }} role="status" aria-live="polite">
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
@@ -78,7 +77,6 @@ export default function NewsFeed({ category }: Props) {
     </div>
   )
 
-  /* ── Error ── */
   if (loadError) return (
     <div style={{ padding: '48px 24px', textAlign: 'center', maxWidth: 360, margin: '0 auto' }}>
       <div style={{ color: 'var(--tx)', fontSize: 14, marginBottom: 12 }}>{loadError}</div>
@@ -92,18 +90,18 @@ export default function NewsFeed({ category }: Props) {
     </div>
   )
 
-  /* ── Empty ── */
   if (!items.length) return (
     <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--mu)', fontSize: 14 }}>
       No stories available right now. Try refreshing.
     </div>
   )
 
-  // Tier 1: item[0] = hero, items[1–3] = right stack (standard)
-  // Tier 2: items[4–12] = 3×3 grid (standard)
+  // item[0]   = hero (image top)
+  // items[1–4] = right stack (text left, image right) — 4 cards fills hero height
+  // items[5–13] = 3×3 grid (text left, image right)
   const hero       = items[0]
-  const rightStack = items.slice(1, 4)
-  const grid       = items.slice(4, 13)
+  const rightStack = items.slice(1, 5)
+  const grid       = items.slice(5, 14)
 
   return (
     <>
@@ -115,23 +113,23 @@ export default function NewsFeed({ category }: Props) {
         />
       )}
 
-      <div style={{ padding: '16px 24px 32px' }}>
-        {/* Updated label */}
+      {/* Centered max-width container — breathing room on wide screens */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px 32px' }}>
         <div style={{ fontSize: 11, color: 'var(--mu)', marginBottom: 14 }}>
           Updated {updatedAt}
         </div>
 
-        {/* ── Tier 1: hero left + 3 standard stacked right ── */}
+        {/* ── Tier 1: hero left + 4 standard stacked right ── */}
         <div className="tier1" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: 10,
           marginBottom: 10,
+          alignItems: 'start', // prevents stretching — each column is its natural height
         }}>
-          {/* Hero — image top */}
           <NewsCard item={hero} variant="hero" onClick={setModal} category={category} />
 
-          {/* Right stack — text left, image right */}
+          {/* Right stack — 4 cards, natural height, no stretching */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {rightStack.map(item => (
               <NewsCard key={item.id} item={item} variant="standard" onClick={setModal} category={category} />
@@ -139,7 +137,7 @@ export default function NewsFeed({ category }: Props) {
           </div>
         </div>
 
-        {/* ── Tier 2: 3×3 grid — all standard (text left, image right) ── */}
+        {/* ── Tier 2: 3×3 grid ── */}
         {grid.length > 0 && (
           <div className="news-grid" style={{
             display: 'grid',

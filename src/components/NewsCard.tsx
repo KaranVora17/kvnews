@@ -71,11 +71,11 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
           alt=""
           sizes="(max-width: 768px) 100vw, 600px"
           fallbackSrc={fallback}
-          wrapperStyle={{ width: '100%', height: 210, background: 'var(--bdr)' }}
+          wrapperStyle={{ width: '100%', height: 220, background: 'var(--bdr)' }}
           objectPosition="top center"
         />
-        <div style={{ padding: '12px 14px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+        <div style={{ padding: '14px 16px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             {item.breaking && (
               <span style={{
                 fontSize: 10, fontWeight: 600,
@@ -92,11 +92,14 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
                 letterSpacing: 0.8, textTransform: 'uppercase',
               }}>Trending</span>
             )}
-            <span style={{ fontSize: 10, color: 'var(--mu)' }}>{formatAge(item.ageMinutes)}</span>
+            <span style={{ fontSize: 11, color: 'var(--mu)' }}>{formatAge(item.ageMinutes)}</span>
           </div>
           <div style={{
-            fontSize: 15, fontWeight: 600, color: 'var(--tx)',
-            lineHeight: 1.35, marginBottom: 5,
+            fontSize: 16,              // bumped from 15
+            fontWeight: 600,
+            color: 'var(--tx)',
+            lineHeight: 1.35,
+            marginBottom: 6,
             display: '-webkit-box', WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>
@@ -104,7 +107,9 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
           </div>
           {item.summary && (
             <div style={{
-              fontSize: 12, color: 'var(--mu)', lineHeight: 1.5,
+              fontSize: 13,            // bumped from 12
+              color: 'var(--mu)',
+              lineHeight: 1.55,
               display: '-webkit-box', WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}>
@@ -143,7 +148,7 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
     >
       {/* Text left */}
       <div style={{
-        padding: '10px 12px',
+        padding: '11px 13px',
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
@@ -152,14 +157,16 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
         minWidth: 0,
       }}>
         <div style={{
-          fontSize: 12, fontWeight: 500, color: 'var(--tx)',
-          lineHeight: 1.4,
+          fontSize: 13,              // bumped from 12
+          fontWeight: 500,
+          color: 'var(--tx)',
+          lineHeight: 1.45,
           display: '-webkit-box', WebkitLineClamp: 4,
           WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
           {item.headline}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--mu)', marginTop: 6 }}>
+        <div style={{ fontSize: 11, color: 'var(--mu)', marginTop: 7 }}>
           {formatAge(item.ageMinutes)}
         </div>
       </div>

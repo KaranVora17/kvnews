@@ -12,7 +12,6 @@ type Props = {
   fallbackSrc?: string
   wrapperClassName?: string
   wrapperStyle?: CSSProperties
-  /** Controls which part of the image is visible. Default: 'top center' */
   objectPosition?: string
 }
 

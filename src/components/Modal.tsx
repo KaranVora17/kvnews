@@ -2,7 +2,7 @@
 import { useEffect } from 'react'
 import { NewsItem } from '@/lib/fetcher'
 import { formatAge } from '@/lib/formatAge'
-import StoryImage, { STORY_IMAGE_FALLBACK } from './StoryImage'
+import { STORY_IMAGE_FALLBACK } from './StoryImage'
 
 type Props = {
   item: NewsItem
@@ -10,14 +10,12 @@ type Props = {
 }
 
 export default function Modal({ item, onClose }: Props) {
-  // Close on Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Prevent body scroll while modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
@@ -40,29 +38,48 @@ export default function Modal({ item, onClose }: Props) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="modal-box">
-        {/* Image */}
-        <StoryImage
-          src={src}
-          alt=""
-          sizes="(max-width: 640px) 100vw, 640px"
-          fallbackSrc={STORY_IMAGE_FALLBACK}
-          wrapperStyle={{ height: 220, background: 'var(--bdr)' }}
-        />
+        {/* Image — contain so full image is always visible, no cropping */}
+        <div style={{
+          width: '100%',
+          background: 'var(--bdr)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          maxHeight: 280,
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt=""
+            onError={e => { e.currentTarget.src = STORY_IMAGE_FALLBACK }}
+            style={{
+              width: '100%',
+              height: 'auto',
+              maxHeight: 280,
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+        </div>
 
         {/* Content */}
         <div style={{ padding: '20px 24px 24px' }}>
-          {/* Badges */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
             {item.breaking && (
               <span style={{
-                fontSize: 10, fontWeight: 500, background: 'var(--acc)', color: 'var(--sur)',
-                padding: '2px 8px', borderRadius: 3, letterSpacing: 0.8, textTransform: 'uppercase',
+                fontSize: 10, fontWeight: 600,
+                background: '#e53e3e', color: '#fff',
+                padding: '2px 8px', borderRadius: 3,
+                letterSpacing: 0.8, textTransform: 'uppercase',
               }}>Breaking</span>
             )}
             {item.trending && !item.breaking && (
               <span style={{
-                fontSize: 10, fontWeight: 500, background: 'var(--acc)', color: 'var(--sur)',
-                padding: '2px 8px', borderRadius: 3, letterSpacing: 0.8, textTransform: 'uppercase',
+                fontSize: 10, fontWeight: 500,
+                background: 'var(--acc)', color: 'var(--sur)',
+                padding: '2px 8px', borderRadius: 3,
+                letterSpacing: 0.8, textTransform: 'uppercase',
               }}>Trending</span>
             )}
             <span style={{ fontSize: 10, color: 'var(--mu)' }}>
@@ -70,7 +87,6 @@ export default function Modal({ item, onClose }: Props) {
             </span>
           </div>
 
-          {/* Headline */}
           <h2 style={{
             fontSize: 18, fontWeight: 500, color: 'var(--tx)',
             lineHeight: 1.4, marginBottom: 12,
@@ -78,14 +94,12 @@ export default function Modal({ item, onClose }: Props) {
             {item.headline}
           </h2>
 
-          {/* Summary */}
           <p style={{
             fontSize: 14, color: 'var(--mu)', lineHeight: 1.7, marginBottom: 24,
           }}>
             {item.summary}
           </p>
 
-          {/* Actions */}
           <div style={{ display: 'flex', gap: 10 }}>
             <a
               href={item.url}
