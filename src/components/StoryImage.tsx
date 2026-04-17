@@ -9,7 +9,6 @@ type Props = {
   src: string
   alt: string
   sizes: string
-  /** Used when the feed URL fails to load (e.g. category-specific placeholder). */
   fallbackSrc?: string
   wrapperClassName?: string
   wrapperStyle?: CSSProperties
@@ -24,9 +23,7 @@ export default function StoryImage({
   wrapperStyle,
 }: Props) {
   const [src, setSrc] = useState(initialSrc)
-  useEffect(() => {
-    setSrc(initialSrc)
-  }, [initialSrc])
+  useEffect(() => { setSrc(initialSrc) }, [initialSrc])
 
   const onFail = () => setSrc(fallbackSrc ?? STORY_IMAGE_FALLBACK)
 
@@ -37,7 +34,7 @@ export default function StoryImage({
         alt={alt}
         fill
         sizes={sizes}
-        unoptimized
+        quality={85}                      // ← was unoptimized; now properly optimized
         style={{ objectFit: 'cover', display: 'block' }}
         onError={onFail}
       />

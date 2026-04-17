@@ -56,6 +56,10 @@ export const CATEGORIES: Category[] = [
       { url: 'https://feeds.bbci.co.uk/sport/rss.xml', primary: true },
       { url: 'https://www.espn.com/espn/rss/news', primary: true },
       { url: 'https://feeds.feedburner.com/ndtvnews-sports', primary: false },
+      { url: 'https://www.skysports.com/rss/12040', primary: false },           // Sky Sports — rich images, broad coverage
+      { url: 'https://sportstar.thehindu.com/feed/', primary: false },          // Sportstar (Hindu) — strong India sports coverage
+      { url: 'https://www.goal.com/feeds/en/news', primary: false },            // Goal.com — good for non-football overflow too
+      { url: 'https://timesofindia.indiatimes.com/rss/4719148.cms', primary: false }, // TOI Sports — India-focused, image-rich
     ],
     keywords: ['sport', 'athlete', 'champion', 'tournament', 'medal', 'Olympic', 'F1', 'Formula', 'tennis', 'hockey', 'badminton'],
   },

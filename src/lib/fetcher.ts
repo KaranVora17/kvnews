@@ -95,6 +95,48 @@ function extractImage(item: Record<string, unknown>): string | null {
   return null
 }
 
+/**
+ * Many RSS feeds serve low-res thumbnail URLs. Where the pattern is known,
+ * rewrite the URL to request a higher-resolution version.
+ */
+function upscaleImage(url: string): string {
+  // BBC: /240/ or /320/ → /800/  (supports up to 1024)
+  if (url.includes('ichef.bbci.co.uk')) {
+    return url.replace(/\/\d{2,4}\//, '/800/')
+  }
+  // Sky Sports: _skysports-\d+x\d+ → _skysports-800x450
+  if (url.includes('skysports.com')) {
+    return url.replace(/_skysports-\d+x\d+/, '_skysports-800x450')
+  }
+  // ESPN: _\d+x\d+  e.g. _576x324 → _1024x576
+  if (url.includes('espncdn.com') || url.includes('espn.com')) {
+    return url.replace(/_\d+x\d+/, '_1024x576')
+  }
+  // The Hindu / Sportstar: width= param
+  if (url.includes('thehindu.com') || url.includes('sportstar.thehindu.com')) {
+    return url.replace(/width=\d+/, 'width=800')
+  }
+  // NDTV: _\d+x\d+ thumbnail suffix
+  if (url.includes('ndtv.com') || url.includes('ndtvimg.com')) {
+    return url.replace(/_\d+x\d+/, '_900x507')
+  }
+  // Times of India: width=\d+  or  /thumb/\d+x\d+
+  if (url.includes('timesofindia') || url.includes('toiimg.com')) {
+    return url
+      .replace(/width=\d+/, 'width=800')
+      .replace(/\/thumb\/\d+x\d+/, '/thumb/800x450')
+  }
+  // TechCrunch / WordPress: -\d+x\d+.jpg → remove size suffix for full res
+  if (url.includes('techcrunch.com') || url.match(/-\d{2,4}x\d{2,4}\.(jpg|jpeg|png|webp)/i)) {
+    return url.replace(/-\d{2,4}x\d{2,4}(\.(jpg|jpeg|png|webp))/i, '$1')
+  }
+  // Al Jazeera: &w=\d+ or ?w=\d+
+  if (url.includes('aljazeera.com')) {
+    return url.replace(/([?&]w=)\d+/, '$1800')
+  }
+  return url
+}
+
 function ageMinutes(dateStr: string): number {
   if (!dateStr) return 9999
   const pub = new Date(dateStr).getTime()
@@ -125,11 +167,12 @@ async function fetchFeed(url: string): Promise<NewsItem[]> {
       const pubDate = String(item.pubDate || item.published || item.updated || '')
       const age = ageMinutes(pubDate)
 
+      const rawImage = extractImage(row)
       return {
         id: Buffer.from(link).toString('base64').slice(0, 16),
         headline: cleanHeadline(title),
         summary: cleanSummary(desc),
-        image: extractImage(row),
+        image: rawImage ? upscaleImage(rawImage) : null,
         url: link,
         publishedAt: pubDate,
         ageMinutes: age,
