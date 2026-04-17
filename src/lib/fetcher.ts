@@ -75,22 +75,19 @@ function extractLink(item: Record<string, unknown>): string {
 }
 
 function extractImage(item: Record<string, unknown>): string | null {
-  // Helper: ensure https
   const https = (url: string) => url.replace(/^http:\/\//, 'https://')
 
-  // 1. media:thumbnail — BBC Sport uses this (attribute @_url)
+  // 1. media:thumbnail — BBC feeds
   const thumb = item['media:thumbnail'] as Record<string, string> | undefined
   if (thumb?.['@_url']) return https(thumb['@_url'])
 
-  // 2. media:content — NDTV, The Hindu, ESPN use this
+  // 2. media:content — NDTV, The Hindu, ESPN Cricinfo
   const mc = item['media:content']
   if (mc) {
-    // Single object with @_url attribute
     if (typeof mc === 'object' && !Array.isArray(mc)) {
       const url = (mc as Record<string, string>)['@_url']
       if (url) return https(url)
     }
-    // Array — take first with a url
     if (Array.isArray(mc)) {
       for (const m of mc) {
         const url = (m as Record<string, string>)['@_url']
@@ -99,20 +96,19 @@ function extractImage(item: Record<string, unknown>): string | null {
     }
   }
 
-  // 3. coverImages — ESPN Cricinfo uses plain text tag
+  // 3. coverImages — ESPN Cricinfo plain text tag
   const cover = item['coverImages']
   if (typeof cover === 'string' && cover.startsWith('http')) return https(cover)
 
-  // 4. enclosure — podcasts / some RSS feeds
+  // 4. enclosure
   const enc = item['enclosure'] as Record<string, string> | undefined
   if (enc?.['@_url'] && enc?.['@_type']?.startsWith('image')) return https(enc['@_url'])
 
-  // 5. image tag — some feeds wrap in <image><url>
+  // 5. image tag
   const img = item['image'] as Record<string, unknown> | undefined
-  if (typeof img?.url === 'string') return https(img.url)
+  if (typeof img?.url === 'string') return https(img.url as string)
 
-  // 6. Last resort: src= in description HTML — but ONLY accept known image CDN domains
-  //    to avoid picking up logos, ads, or generic stock images
+  // 6. src= in description HTML — only trusted image CDN domains
   const desc = extractBodyForSummary(item)
   const match = desc.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))[^"']*["']/i)
   if (match) {
@@ -129,26 +125,14 @@ function extractImage(item: Record<string, unknown>): string | null {
   return null
 }
 
-/**
- * Many RSS feeds serve low-res thumbnail URLs. Where the pattern is known,
- * rewrite the URL to request a higher-resolution version.
- */
 function upscaleImage(url: string): string {
-  // BBC: /240/ or /320/ → /800/
   if (url.includes('ichef.bbci.co.uk')) return url.replace(/\/\d{2,4}\//, '/800/')
-  // Sky Sports: _skysports-\d+x\d+ → _skysports-800x450
   if (url.includes('skysports.com')) return url.replace(/_skysports-\d+x\d+/, '_skysports-800x450')
-  // ESPN: _\d+x\d+ e.g. _576x324 → _1024x576
   if (url.includes('espncdn.com') || url.includes('espn.com')) return url.replace(/_\d+x\d+/, '_1024x576')
-  // The Hindu / Sportstar: width= param
   if (url.includes('thehindu.com') || url.includes('thgim.com')) return url.replace(/width=\d+/, 'width=800')
-  // NDTV: width= in query params
   if (url.includes('ndtv.com') || url.includes('ndtvimg.com')) return url.replace(/width=\d+/, 'width=1200')
-  // Times of India
   if (url.includes('timesofindia') || url.includes('toiimg.com')) return url.replace(/width=\d+/, 'width=800').replace(/\/thumb\/\d+x\d+/, '/thumb/800x450')
-  // TechCrunch / WordPress: remove -WxH size suffix
   if (url.match(/-\d{2,4}x\d{2,4}\.(jpg|jpeg|png|webp)/i)) return url.replace(/-\d{2,4}x\d{2,4}(\.(jpg|jpeg|png|webp))/i, '$1')
-  // Al Jazeera: w= param
   if (url.includes('aljazeera.com')) return url.replace(/([?&]w=)\d+/, '$1800')
   return url
 }
@@ -237,8 +221,7 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
 
   const withImages = (items: NewsItem[]) => items.filter(i => i.image !== null)
 
-  // Fetch all fallbacks if primaries don't yield 10 image-bearing stories
-  if (withImages(allItems).length < 10 && fallbacks.length > 0) {
+  if (withImages(allItems).length < 13 && fallbacks.length > 0) {
     const fallbackResults = await Promise.all(fallbacks.map(f => fetchFeed(f.url)))
     allItems = [...allItems, ...fallbackResults.flat()]
   }
@@ -248,7 +231,7 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
     const filtered = allItems.filter(item =>
       kw.some(k => item.headline.toLowerCase().includes(k) || item.summary.toLowerCase().includes(k))
     )
-    if (withImages(filtered).length >= 10) allItems = filtered
+    if (withImages(filtered).length >= 13) allItems = filtered
   }
 
   const deduped = dedup(allItems)
@@ -257,5 +240,5 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
   return withTrending
     .filter(item => item.image !== null)
     .sort((a, b) => a.ageMinutes - b.ageMinutes)
-    .slice(0, 10)
+    .slice(0, 13)
 }
