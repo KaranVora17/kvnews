@@ -14,13 +14,15 @@ export type NewsItem = {
   breaking: boolean
 }
 
+// Hard cap: never show stories older than 23 hours
+const MAX_AGE_MINUTES = 23 * 60
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   isArray: (name) => ['item', 'entry'].includes(name),
 })
 
-// Strip common RSS headline noise
 function cleanHeadline(raw: string): string {
   return he.decode(raw)
     .replace(/^(WATCH|EXCLUSIVE|BREAKING|VIDEO|PHOTOS?|LIVE)[:\s|]+/gi, '')
@@ -37,7 +39,6 @@ function cleanSummary(raw: string): string {
     .slice(0, 200)
 }
 
-/** RSS/Atom often encode text as strings, `{ #text }`, or nested tags. */
 function extractTextField(raw: unknown, depth = 0): string {
   if (raw == null || depth > 6) return ''
   if (typeof raw === 'string') return raw
@@ -108,7 +109,7 @@ function extractImage(item: Record<string, unknown>): string | null {
   const img = item['image'] as Record<string, unknown> | undefined
   if (typeof img?.url === 'string') return https(img.url as string)
 
-  // 6. src= in description HTML — only trusted image CDN domains
+  // 6. src= in description — only trusted CDN domains to avoid logos/ads
   const desc = extractBodyForSummary(item)
   const match = desc.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))[^"']*["']/i)
   if (match) {
@@ -159,15 +160,15 @@ async function fetchFeed(url: string): Promise<NewsItem[]> {
       data?.feed?.entry ||
       []
 
-    return items.slice(0, 15).map((item) => {
+    return items.slice(0, 20).map((item) => {
       const row = item as Record<string, unknown>
       const title = extractTitle(row)
       const desc = extractBodyForSummary(row)
       const link = extractLink(row)
       const pubDate = String(item.pubDate || item.published || item.updated || '')
       const age = ageMinutes(pubDate)
-
       const rawImage = extractImage(row)
+
       return {
         id: Buffer.from(link).toString('base64').slice(0, 16),
         headline: cleanHeadline(title),
@@ -189,7 +190,6 @@ function dedup(items: NewsItem[]): NewsItem[] {
   const seen = new Set<string>()
   const result: NewsItem[] = []
   for (const item of items) {
-    // Normalise headline to detect duplicates across sources
     const key = item.headline.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)
     if (!seen.has(key)) {
       seen.add(key)
@@ -200,7 +200,6 @@ function dedup(items: NewsItem[]): NewsItem[] {
 }
 
 function markTrending(items: NewsItem[], allItems: NewsItem[]): NewsItem[] {
-  // Count how many times each normalised headline appears across sources
   const counts = new Map<string, number>()
   for (const item of allItems) {
     const key = item.headline.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)
@@ -216,29 +215,34 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
   const primaries = category.feeds.filter(f => f.primary)
   const fallbacks = category.feeds.filter(f => !f.primary)
 
+  // Fresh = has image AND within 23 hours
+  const fresh = (items: NewsItem[]) =>
+    items.filter(i => i.image !== null && i.ageMinutes <= MAX_AGE_MINUTES)
+
+  // Always fetch all primaries
   const primaryResults = await Promise.all(primaries.map(f => fetchFeed(f.url)))
   let allItems = primaryResults.flat()
 
-  const withImages = (items: NewsItem[]) => items.filter(i => i.image !== null)
-
-  if (withImages(allItems).length < 13 && fallbacks.length > 0) {
+  // Fetch ALL fallbacks if primaries don't yield 14 fresh stories
+  if (fresh(allItems).length < 14 && fallbacks.length > 0) {
     const fallbackResults = await Promise.all(fallbacks.map(f => fetchFeed(f.url)))
     allItems = [...allItems, ...fallbackResults.flat()]
   }
 
+  // Apply keyword filter only if it still leaves 14 fresh stories
   if (category.keywords && category.keywords.length > 0) {
     const kw = category.keywords.map(k => k.toLowerCase())
     const filtered = allItems.filter(item =>
       kw.some(k => item.headline.toLowerCase().includes(k) || item.summary.toLowerCase().includes(k))
     )
-    if (withImages(filtered).length >= 13) allItems = filtered
+    if (fresh(filtered).length >= 14) allItems = filtered
   }
 
   const deduped = dedup(allItems)
   const withTrending = markTrending(deduped, allItems)
 
   return withTrending
-    .filter(item => item.image !== null)
-    .sort((a, b) => a.ageMinutes - b.ageMinutes)
-    .slice(0, 13)
+    .filter(item => item.image !== null && item.ageMinutes <= MAX_AGE_MINUTES)
+    .sort((a, b) => a.ageMinutes - b.ageMinutes)  // freshest first always
+    .slice(0, 14)
 }

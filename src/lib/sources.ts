@@ -29,11 +29,8 @@ export const CATEGORIES: Category[] = [
     id: 'business',
     label: 'Business',
     feeds: [
-      // Reuters Business — reliably includes media:thumbnail images
       { url: 'https://feeds.reuters.com/reuters/businessNews', primary: true },
-      // Livemint — good Indian business coverage with images
       { url: 'https://www.livemint.com/rss/money', primary: true },
-      // ET as fallback — text-only but good headlines
       { url: 'https://economictimes.indiatimes.com/rssfeedstopstories.cms', primary: false },
     ],
   },
@@ -41,11 +38,8 @@ export const CATEGORIES: Category[] = [
     id: 'technology',
     label: 'Technology',
     feeds: [
-      // TechCrunch — includes enclosure images reliably
       { url: 'https://techcrunch.com/feed/', primary: true },
-      // Ars Technica — excellent images in feed
       { url: 'https://feeds.arstechnica.com/arstechnica/index', primary: true },
-      // BBC Tech as fallback — consistent BBC images
       { url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', primary: false },
     ],
   },
@@ -54,12 +48,15 @@ export const CATEGORIES: Category[] = [
     label: 'Sports',
     feeds: [
       { url: 'https://feeds.bbci.co.uk/sport/rss.xml', primary: true },
-      { url: 'https://www.espn.com/espn/rss/news', primary: true },
+      // BBC Sport publishes news-only items frequently — good freshness
+      { url: 'https://feeds.bbci.co.uk/sport/athletics/rss.xml', primary: true },
       { url: 'https://feeds.feedburner.com/ndtvnews-sports', primary: false },
-      { url: 'https://www.skysports.com/rss/12040', primary: false },           // Sky Sports — rich images, broad coverage
-      { url: 'https://sportstar.thehindu.com/feed/', primary: false },          // Sportstar (Hindu) — strong India sports coverage
-      { url: 'https://www.goal.com/feeds/en/news', primary: false },            // Goal.com — good for non-football overflow too
-      { url: 'https://timesofindia.indiatimes.com/rss/4719148.cms', primary: false }, // TOI Sports — India-focused, image-rich
+      { url: 'https://sportstar.thehindu.com/feed/', primary: false },
+      { url: 'https://timesofindia.indiatimes.com/rss/4719148.cms', primary: false },
+      // Reuters Sports — globally fresh, image-rich
+      { url: 'https://feeds.reuters.com/reuters/sportsNews', primary: false },
+      // ESPN India — fresher than espn.com global
+      { url: 'https://www.espn.in/espn/rss/news', primary: false },
     ],
     keywords: ['sport', 'athlete', 'champion', 'tournament', 'medal', 'Olympic', 'F1', 'Formula', 'tennis', 'hockey', 'badminton'],
   },
@@ -67,19 +64,31 @@ export const CATEGORIES: Category[] = [
     id: 'football',
     label: 'Football',
     feeds: [
+      // BBC Football — highest freshness, multiple daily stories
       { url: 'https://feeds.bbci.co.uk/sport/football/rss.xml', primary: true },
+      // Sky Sports Football specifically — fresher than the general /12040 feed
       { url: 'https://www.skysports.com/rss/12040', primary: true },
-      { url: 'https://www.goal.com/feeds/en/news', primary: false },
+      // Reuters Football — fresh match reports and transfer news
+      { url: 'https://feeds.reuters.com/reuters/sportsNews', primary: false },
+      // ESPN FC
+      { url: 'https://www.espn.com/espn/rss/soccer/news', primary: false },
+      // The Guardian Football
+      { url: 'https://www.theguardian.com/football/rss', primary: false },
     ],
-    keywords: ['football', 'soccer', 'Premier League', 'Champions League', 'FIFA', 'transfer', 'La Liga', 'Bundesliga', 'goal', 'match'],
+    keywords: ['football', 'soccer', 'Premier League', 'Champions League', 'FIFA', 'transfer', 'La Liga', 'Bundesliga', 'goal', 'match', 'Arsenal', 'Chelsea', 'Liverpool', 'Manchester'],
   },
   {
     id: 'cricket',
     label: 'Cricket',
     feeds: [
+      // ESPN Cricinfo — highest volume of fresh cricket content
       { url: 'https://www.espncricinfo.com/rss/content/story/feeds/0.xml', primary: true },
       { url: 'https://feeds.bbci.co.uk/sport/cricket/rss.xml', primary: true },
       { url: 'https://feeds.feedburner.com/ndtvnews-cricket', primary: false },
+      // Times of India Cricket — good IPL coverage
+      { url: 'https://timesofindia.indiatimes.com/rss/4719165.cms', primary: false },
+      // Cricbuzz RSS
+      { url: 'https://www.cricbuzz.com/cricket-news/rss-feeds', primary: false },
     ],
     keywords: ['cricket', 'Test', 'ODI', 'T20', 'IPL', 'BCCI', 'wicket', 'innings', 'over', 'batting', 'bowling'],
   },

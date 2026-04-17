@@ -11,9 +11,16 @@ type CacheMeta = { lastUpdated: string; nextUpdate: string }
 function formatUpdatedLabel(lastUpdatedIso?: string, fetchedAtIso?: string): string {
   const src = lastUpdatedIso || fetchedAtIso
   const d = src ? new Date(src) : new Date()
-  if (Number.isNaN(d.getTime()))
-    return new Date().toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  if (Number.isNaN(d.getTime())) d.setTime(Date.now())
+  // 24hr format: Fri, Apr 17, 17:26
+  return d.toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
 }
 
 export default function NewsFeed({ category }: Props) {
@@ -96,9 +103,7 @@ export default function NewsFeed({ category }: Props) {
     </div>
   )
 
-  // item[0]   = hero (image top)
-  // items[1–4] = right stack (text left, image right) — 4 cards fills hero height
-  // items[5–13] = 3×3 grid (text left, image right)
+  // 14 tiles: hero (0) + right stack (1–4) + 3×3 grid (5–13)
   const hero       = items[0]
   const rightStack = items.slice(1, 5)
   const grid       = items.slice(5, 14)
@@ -113,23 +118,20 @@ export default function NewsFeed({ category }: Props) {
         />
       )}
 
-      {/* Centered max-width container — breathing room on wide screens */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px 32px' }}>
-        <div style={{ fontSize: 11, color: 'var(--mu)', marginBottom: 14 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px 40px' }}>
+        <div style={{ fontSize: 11, color: 'var(--mu)', marginBottom: 16 }}>
           Updated {updatedAt}
         </div>
 
-        {/* ── Tier 1: hero left + 4 standard stacked right ── */}
+        {/* ── Tier 1: hero left + 4 standard right ── */}
         <div className="tier1" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: 10,
-          marginBottom: 10,
-          alignItems: 'start', // prevents stretching — each column is its natural height
+          gap: 14,
+          marginBottom: 20,  // gap between tier 1 and tier 2
+          alignItems: 'start',
         }}>
           <NewsCard item={hero} variant="hero" onClick={setModal} category={category} />
-
-          {/* Right stack — 4 cards, natural height, no stretching */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {rightStack.map(item => (
               <NewsCard key={item.id} item={item} variant="standard" onClick={setModal} category={category} />
@@ -142,7 +144,7 @@ export default function NewsFeed({ category }: Props) {
           <div className="news-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-            gap: 10,
+            gap: 12,
           }}>
             {grid.map(item => (
               <NewsCard key={item.id} item={item} variant="standard" onClick={setModal} category={category} />
