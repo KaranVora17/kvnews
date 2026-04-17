@@ -12,7 +12,6 @@ function formatUpdatedLabel(lastUpdatedIso?: string, fetchedAtIso?: string): str
   const src = lastUpdatedIso || fetchedAtIso
   const d = src ? new Date(src) : new Date()
   if (Number.isNaN(d.getTime())) d.setTime(Date.now())
-  // 24hr format: Fri, Apr 17, 17:26
   return d.toLocaleString(undefined, {
     weekday: 'short',
     month: 'short',
@@ -123,16 +122,22 @@ export default function NewsFeed({ category }: Props) {
           Updated {updatedAt}
         </div>
 
-        {/* ── Tier 1: hero left + 4 standard right ── */}
+        {/* ── Tier 1: hero left + 4 equal-height cards right ── */}
         <div className="tier1" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: 14,
-          marginBottom: 20,  // gap between tier 1 and tier 2
-          alignItems: 'start',
+          marginBottom: 20,
         }}>
+          {/* Hero */}
           <NewsCard item={hero} variant="hero" onClick={setModal} category={category} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+          {/* Right stack — cards fill hero height equally */}
+          <div style={{
+            display: 'grid',
+            gridTemplateRows: `repeat(${rightStack.length}, 1fr)`,
+            gap: 10,
+          }}>
             {rightStack.map(item => (
               <NewsCard key={item.id} item={item} variant="standard" onClick={setModal} category={category} />
             ))}
