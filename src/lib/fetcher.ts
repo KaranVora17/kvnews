@@ -75,22 +75,56 @@ function extractLink(item: Record<string, unknown>): string {
 }
 
 function extractImage(item: Record<string, unknown>): string | null {
-  // Try media:thumbnail
-  const media = item['media:thumbnail'] as Record<string, string> | undefined
-  if (media?.['@_url']) return media['@_url']
+  // Helper: ensure https
+  const https = (url: string) => url.replace(/^http:\/\//, 'https://')
 
-  // Try media:content
-  const content = item['media:content'] as Record<string, string> | undefined
-  if (content?.['@_url']) return content['@_url']
+  // 1. media:thumbnail — BBC Sport uses this (attribute @_url)
+  const thumb = item['media:thumbnail'] as Record<string, string> | undefined
+  if (thumb?.['@_url']) return https(thumb['@_url'])
 
-  // Try enclosure
+  // 2. media:content — NDTV, The Hindu, ESPN use this
+  const mc = item['media:content']
+  if (mc) {
+    // Single object with @_url attribute
+    if (typeof mc === 'object' && !Array.isArray(mc)) {
+      const url = (mc as Record<string, string>)['@_url']
+      if (url) return https(url)
+    }
+    // Array — take first with a url
+    if (Array.isArray(mc)) {
+      for (const m of mc) {
+        const url = (m as Record<string, string>)['@_url']
+        if (url) return https(url)
+      }
+    }
+  }
+
+  // 3. coverImages — ESPN Cricinfo uses plain text tag
+  const cover = item['coverImages']
+  if (typeof cover === 'string' && cover.startsWith('http')) return https(cover)
+
+  // 4. enclosure — podcasts / some RSS feeds
   const enc = item['enclosure'] as Record<string, string> | undefined
-  if (enc?.['@_url'] && enc?.['@_type']?.startsWith('image')) return enc['@_url']
+  if (enc?.['@_url'] && enc?.['@_type']?.startsWith('image')) return https(enc['@_url'])
 
-  // Try og:image in description
+  // 5. image tag — some feeds wrap in <image><url>
+  const img = item['image'] as Record<string, unknown> | undefined
+  if (typeof img?.url === 'string') return https(img.url)
+
+  // 6. Last resort: src= in description HTML — but ONLY accept known image CDN domains
+  //    to avoid picking up logos, ads, or generic stock images
   const desc = extractBodyForSummary(item)
   const match = desc.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))[^"']*["']/i)
-  if (match) return match[1]
+  if (match) {
+    const url = match[1]
+    const allowed = [
+      'ichef.bbci.co.uk', 'ndtvimg.com', 'thgim.com', 'imgci.com',
+      'espncricinfo.com', 'skysports.com', 'espncdn.com', 'toiimg.com',
+      'techcrunch.com', 'arstechnica.net', 'aljazeera.com', 'reuters.com',
+      'livemint.com', 'indianexpress.com', 'goal.com',
+    ]
+    if (allowed.some(domain => url.includes(domain))) return https(url)
+  }
 
   return null
 }
@@ -100,40 +134,22 @@ function extractImage(item: Record<string, unknown>): string | null {
  * rewrite the URL to request a higher-resolution version.
  */
 function upscaleImage(url: string): string {
-  // BBC: /240/ or /320/ → /800/  (supports up to 1024)
-  if (url.includes('ichef.bbci.co.uk')) {
-    return url.replace(/\/\d{2,4}\//, '/800/')
-  }
+  // BBC: /240/ or /320/ → /800/
+  if (url.includes('ichef.bbci.co.uk')) return url.replace(/\/\d{2,4}\//, '/800/')
   // Sky Sports: _skysports-\d+x\d+ → _skysports-800x450
-  if (url.includes('skysports.com')) {
-    return url.replace(/_skysports-\d+x\d+/, '_skysports-800x450')
-  }
-  // ESPN: _\d+x\d+  e.g. _576x324 → _1024x576
-  if (url.includes('espncdn.com') || url.includes('espn.com')) {
-    return url.replace(/_\d+x\d+/, '_1024x576')
-  }
+  if (url.includes('skysports.com')) return url.replace(/_skysports-\d+x\d+/, '_skysports-800x450')
+  // ESPN: _\d+x\d+ e.g. _576x324 → _1024x576
+  if (url.includes('espncdn.com') || url.includes('espn.com')) return url.replace(/_\d+x\d+/, '_1024x576')
   // The Hindu / Sportstar: width= param
-  if (url.includes('thehindu.com') || url.includes('sportstar.thehindu.com')) {
-    return url.replace(/width=\d+/, 'width=800')
-  }
-  // NDTV: _\d+x\d+ thumbnail suffix
-  if (url.includes('ndtv.com') || url.includes('ndtvimg.com')) {
-    return url.replace(/_\d+x\d+/, '_900x507')
-  }
-  // Times of India: width=\d+  or  /thumb/\d+x\d+
-  if (url.includes('timesofindia') || url.includes('toiimg.com')) {
-    return url
-      .replace(/width=\d+/, 'width=800')
-      .replace(/\/thumb\/\d+x\d+/, '/thumb/800x450')
-  }
-  // TechCrunch / WordPress: -\d+x\d+.jpg → remove size suffix for full res
-  if (url.includes('techcrunch.com') || url.match(/-\d{2,4}x\d{2,4}\.(jpg|jpeg|png|webp)/i)) {
-    return url.replace(/-\d{2,4}x\d{2,4}(\.(jpg|jpeg|png|webp))/i, '$1')
-  }
-  // Al Jazeera: &w=\d+ or ?w=\d+
-  if (url.includes('aljazeera.com')) {
-    return url.replace(/([?&]w=)\d+/, '$1800')
-  }
+  if (url.includes('thehindu.com') || url.includes('thgim.com')) return url.replace(/width=\d+/, 'width=800')
+  // NDTV: width= in query params
+  if (url.includes('ndtv.com') || url.includes('ndtvimg.com')) return url.replace(/width=\d+/, 'width=1200')
+  // Times of India
+  if (url.includes('timesofindia') || url.includes('toiimg.com')) return url.replace(/width=\d+/, 'width=800').replace(/\/thumb\/\d+x\d+/, '/thumb/800x450')
+  // TechCrunch / WordPress: remove -WxH size suffix
+  if (url.match(/-\d{2,4}x\d{2,4}\.(jpg|jpeg|png|webp)/i)) return url.replace(/-\d{2,4}x\d{2,4}(\.(jpg|jpeg|png|webp))/i, '$1')
+  // Al Jazeera: w= param
+  if (url.includes('aljazeera.com')) return url.replace(/([?&]w=)\d+/, '$1800')
   return url
 }
 
@@ -216,24 +232,23 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
   const primaries = category.feeds.filter(f => f.primary)
   const fallbacks = category.feeds.filter(f => !f.primary)
 
-  // Fetch both primaries in parallel
-  const results = await Promise.all(primaries.map(f => fetchFeed(f.url)))
-  let allItems = results.flat()
+  const primaryResults = await Promise.all(primaries.map(f => fetchFeed(f.url)))
+  let allItems = primaryResults.flat()
 
-  // If we got fewer than 5 items, try fallback
-  if (allItems.length < 5 && fallbacks.length > 0) {
-    const fallbackItems = await fetchFeed(fallbacks[0].url)
-    allItems = [...allItems, ...fallbackItems]
+  const withImages = (items: NewsItem[]) => items.filter(i => i.image !== null)
+
+  // Fetch all fallbacks if primaries don't yield 10 image-bearing stories
+  if (withImages(allItems).length < 10 && fallbacks.length > 0) {
+    const fallbackResults = await Promise.all(fallbacks.map(f => fetchFeed(f.url)))
+    allItems = [...allItems, ...fallbackResults.flat()]
   }
 
-  // Apply keyword filter if defined
   if (category.keywords && category.keywords.length > 0) {
     const kw = category.keywords.map(k => k.toLowerCase())
     const filtered = allItems.filter(item =>
       kw.some(k => item.headline.toLowerCase().includes(k) || item.summary.toLowerCase().includes(k))
     )
-    // Only apply filter if we still have enough items
-    if (filtered.length >= 5) allItems = filtered
+    if (withImages(filtered).length >= 10) allItems = filtered
   }
 
   const deduped = dedup(allItems)
