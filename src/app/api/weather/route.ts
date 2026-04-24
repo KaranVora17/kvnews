@@ -8,14 +8,9 @@ const WX_ICONS: Record<string, string> = {
 }
 
 export async function GET(req: NextRequest) {
-  const key =
-    process.env.OPENWEATHER_API_KEY ||
-    process.env.OPENWEATHER_KEY
+  const key = process.env.OPENWEATHER_API_KEY || process.env.OPENWEATHER_KEY
   if (!key) {
-    return NextResponse.json(
-      { error: 'Weather not configured' },
-      { status: 503 }
-    )
+    return NextResponse.json({ error: 'Weather not configured' }, { status: 503 })
   }
 
   const { searchParams } = new URL(req.url)
@@ -25,20 +20,16 @@ export async function GET(req: NextRequest) {
 
   let url: string
   if (lat != null && lon != null && lat !== '' && lon !== '') {
-    const la = encodeURIComponent(lat)
-    const lo = encodeURIComponent(lon)
-    url = `https://api.openweathermap.org/data/2.5/weather?lat=${la}&lon=${lo}&units=metric&appid=${encodeURIComponent(key)}`
+    url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&appid=${encodeURIComponent(key)}`
   } else {
     url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&appid=${encodeURIComponent(key)}`
   }
 
   try {
-    const res = await fetch(url, { next: { revalidate: 0 } })
+    // Cache weather for 5 minutes — no need to hit OWM on every page load
+    const res = await fetch(url, { next: { revalidate: 300 } })
     if (!res.ok) {
-      return NextResponse.json(
-        { error: 'Weather upstream error' },
-        { status: 502 }
-      )
+      return NextResponse.json({ error: 'Weather upstream error' }, { status: 502 })
     }
     const d = (await res.json()) as {
       name?: string
@@ -52,9 +43,6 @@ export async function GET(req: NextRequest) {
       city: d.name || city,
     })
   } catch {
-    return NextResponse.json(
-      { error: 'Weather request failed' },
-      { status: 502 }
-    )
+    return NextResponse.json({ error: 'Weather request failed' }, { status: 502 })
   }
 }

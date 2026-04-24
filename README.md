@@ -3,9 +3,9 @@
 Your current briefing. Clean, fast, hourly-updated news across 7 categories.
 
 ## Stack
-- **Next.js 14** (App Router)
+- **Next.js 15** (App Router)
 - **Vercel** (hosting + cron jobs)
-- **Vercel KV** (Redis-compatible cache)
+- **Upstash Redis** (Redis-compatible cache)
 - **OpenWeatherMap** (free tier weather)
 
 ---
@@ -93,7 +93,7 @@ src/
 ├── lib/
 │   ├── sources.ts             # RSS feed URLs per category
 │   ├── fetcher.ts             # RSS fetch + parse + clean + dedup
-│   ├── cache.ts               # Vercel KV helpers
+│   ├── cache.ts               # Upstash Redis helpers
 │   ├── useTheme.ts            # Theme hook (morning/day/evening)
 │   └── useClock.ts            # Live 24hr clock hook
 └── styles/
@@ -118,7 +118,7 @@ Auto-switches by time. User can override via the icons in the header.
 
 - Vercel cron fires at `0 * * * *` (every hour on the hour)
 - Fetches all 7 categories in parallel
-- Stores each as a JSON blob in Vercel KV (90 min TTL)
+- Stores each as a JSON blob in Upstash Redis (90 min TTL)
 - All users read from the same cached snapshot
 - If cache is empty (first load / KV miss), falls back to live fetch
 

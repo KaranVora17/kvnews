@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 export type Theme = 'morning' | 'day' | 'evening'
 
@@ -12,29 +12,31 @@ function autoTheme(): Theme {
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>('morning')
-  const [manual, setManual] = useState(false)
+  // Use a ref so the interval always reads the latest value without re-running
+  const manualRef = useRef(false)
 
+  // Effect 1: set initial theme on mount only
   useEffect(() => {
-    // Set initial theme
     const t = autoTheme()
     setThemeState(t)
     document.documentElement.setAttribute('data-theme', t)
+  }, [])
 
-    // Auto-switch every minute if not manually overridden
+  // Effect 2: auto-switch every minute — never overrides a manual pick
+  useEffect(() => {
     const interval = setInterval(() => {
-      if (!manual) {
+      if (!manualRef.current) {
         const next = autoTheme()
         setThemeState(next)
         document.documentElement.setAttribute('data-theme', next)
       }
     }, 60_000)
-
     return () => clearInterval(interval)
-  }, [manual])
+  }, []) // empty deps — interval is stable, reads manualRef directly
 
   const setTheme = useCallback((t: Theme) => {
+    manualRef.current = true
     setThemeState(t)
-    setManual(true)
     document.documentElement.setAttribute('data-theme', t)
   }, [])
 

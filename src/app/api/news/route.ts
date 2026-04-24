@@ -5,6 +5,10 @@ import { fetchCategory } from '@/lib/fetcher'
 
 export const dynamic = 'force-dynamic'
 
+// In-memory lock — prevents multiple simultaneous live fetches for the same category
+// on cache miss (e.g. cold start with multiple concurrent users)
+const inFlight = new Map<string, Promise<Awaited<ReturnType<typeof fetchCategory>>>>()
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const cat = searchParams.get('cat') || 'global'
@@ -14,19 +18,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid category' }, { status: 400 })
   }
 
-  // Try cache first
+  // Try Redis cache first
   let items = await getCached(cat)
   const meta = await getMeta()
 
-  // Cache miss — fetch live (first load or KV not set up yet)
+  // Cache miss — fetch live, but only one fetch per category at a time
   if (!items || items.length === 0) {
-    items = await fetchCategory(valid)
+    let promise = inFlight.get(cat)
+    if (!promise) {
+      promise = fetchCategory(valid).finally(() => inFlight.delete(cat))
+      inFlight.set(cat, promise)
+    }
+    items = await promise
   }
 
-  return NextResponse.json({
-    items,
-    category: cat,
-    meta,
-    fetchedAt: new Date().toISOString(),
-  })
+  return NextResponse.json(
+    { items, category: cat, meta, fetchedAt: new Date().toISOString() },
+    { headers: { 'Content-Type': 'application/json' } }
+  )
 }

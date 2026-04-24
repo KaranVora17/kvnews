@@ -2,6 +2,16 @@ import { XMLParser } from 'fast-xml-parser'
 import he from 'he'
 import { Category } from './sources'
 
+// FNV-1a 32-bit hash — stable, collision-resistant story ID from URL
+function fnv1a(str: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = (h * 0x01000193) >>> 0
+  }
+  return h.toString(36)
+}
+
 export type NewsItem = {
   id: string
   headline: string
@@ -165,12 +175,12 @@ async function fetchFeed(url: string): Promise<NewsItem[]> {
       const title = extractTitle(row)
       const desc = extractBodyForSummary(row)
       const link = extractLink(row)
-      const pubDate = String(item.pubDate || item.published || item.updated || '')
+      const pubDate = String(row.pubDate || row.published || row.updated || '')
       const age = ageMinutes(pubDate)
       const rawImage = extractImage(row)
 
       return {
-        id: Buffer.from(link).toString('base64').slice(0, 16),
+        id: fnv1a(link),
         headline: cleanHeadline(title),
         summary: cleanSummary(desc),
         image: rawImage ? upscaleImage(rawImage) : null,

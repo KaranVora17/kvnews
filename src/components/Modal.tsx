@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NewsItem } from '@/lib/fetcher'
 import { formatAge } from '@/lib/formatAge'
 import { STORY_IMAGE_FALLBACK } from './StoryImage'
@@ -10,35 +10,68 @@ type Props = {
 }
 
 export default function Modal({ item, onClose }: Props) {
+  const [toast, setToast] = useState<string | null>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const previousFocus = useRef<Element | null>(null)
+
+  // Save and restore focus for keyboard / screen-reader users
+  useEffect(() => {
+    previousFocus.current = document.activeElement
+    closeRef.current?.focus()
+    return () => {
+      (previousFocus.current as HTMLElement | null)?.focus?.()
+    }
+  }, [])
+
+  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
+  // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const src = item.image || STORY_IMAGE_FALLBACK
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 2500)
+    return () => clearTimeout(t)
+  }, [toast])
 
-  function handleShare() {
+  async function handleShare() {
     if (navigator.share) {
-      navigator.share({ title: item.headline, url: item.url })
-    } else {
-      navigator.clipboard.writeText(item.url)
-        .then(() => alert('Link copied to clipboard'))
+      try {
+        await navigator.share({ title: item.headline, url: item.url })
+      } catch {
+        // User cancelled share — no action needed
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(item.url)
+      setToast('Link copied!')
+    } catch {
+      setToast('Could not copy — please copy the URL manually.')
     }
   }
+
+  const src = item.image || STORY_IMAGE_FALLBACK
 
   return (
     <div
       className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.headline}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="modal-box">
-        {/* Image — contain so full image is always visible, no cropping */}
+        {/* Full image — contain, no crop */}
         <div style={{
           width: '100%',
           background: 'var(--bdr)',
@@ -63,8 +96,8 @@ export default function Modal({ item, onClose }: Props) {
           />
         </div>
 
-        {/* Content */}
         <div style={{ padding: '20px 24px 24px' }}>
+          {/* Badges + age */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
             {item.breaking && (
               <span style={{
@@ -100,6 +133,7 @@ export default function Modal({ item, onClose }: Props) {
             {item.summary}
           </p>
 
+          {/* Actions */}
           <div style={{ display: 'flex', gap: 10 }}>
             <a
               href={item.url}
@@ -132,8 +166,10 @@ export default function Modal({ item, onClose }: Props) {
               Share
             </button>
             <button
+              ref={closeRef}
               type="button"
               onClick={onClose}
+              aria-label="Close"
               style={{
                 padding: '10px 16px',
                 background: 'transparent', color: 'var(--mu)',
@@ -145,6 +181,25 @@ export default function Modal({ item, onClose }: Props) {
               ✕
             </button>
           </div>
+
+          {/* Toast — replaces alert() */}
+          {toast && (
+            <div
+              aria-live="polite"
+              style={{
+                marginTop: 12,
+                padding: '8px 12px',
+                background: 'var(--acc)',
+                color: 'var(--sur)',
+                borderRadius: 6,
+                fontSize: 12,
+                textAlign: 'center',
+                animation: 'fadeIn 0.2s ease',
+              }}
+            >
+              {toast}
+            </div>
+          )}
         </div>
       </div>
     </div>
