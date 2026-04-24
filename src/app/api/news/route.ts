@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CATEGORIES } from '@/lib/sources'
-import { getCached, getMeta } from '@/lib/cache'
+import { getCached, getMeta, setCached } from '@/lib/cache'
 import { fetchCategory } from '@/lib/fetcher'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
       inFlight.set(cat, promise)
     }
     items = await promise
+    // Warm the cache so the next user gets Redis instead of another live fetch
+    setCached(cat, items).catch(() => {/* silently ignore Redis write failures */})
   }
 
   return NextResponse.json(
