@@ -5,8 +5,9 @@ import NewsCard from './NewsCard'
 import Modal from './Modal'
 import BreakingBanner from './BreakingBanner'
 
+import type { CacheMeta } from '@/lib/cache'
+
 type Props = { category: string }
-type CacheMeta = { lastUpdated: string; nextUpdate: string }
 
 function formatUpdatedLabel(lastUpdatedIso?: string, fetchedAtIso?: string): string {
   const src = lastUpdatedIso || fetchedAtIso

@@ -97,6 +97,14 @@ body {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
+/* ── Responsive padding ───────────────────────────────────── */
+@media (max-width: 600px) {
+  header, nav, main > div {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
 /* ── Breaking banner ─────────────────────────────────────── */
 .breaking-banner {
   background: var(--acc);

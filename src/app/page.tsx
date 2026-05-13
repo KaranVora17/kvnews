@@ -14,15 +14,6 @@ export default function Home() {
       <main>
         <NewsFeed key={activeTab} category={activeTab} />
       </main>
-
-      <style>{`
-        @media (max-width: 600px) {
-          header, nav, main > div {
-            padding-left: 14px !important;
-            padding-right: 14px !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }

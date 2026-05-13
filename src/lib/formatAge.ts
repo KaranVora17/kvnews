@@ -6,4 +6,3 @@ export function formatAge(mins: number): string {
   const d = Math.floor(h / 24)
   return d === 1 ? '1 day ago' : `${d} days ago`
 }
- 

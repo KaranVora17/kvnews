@@ -44,7 +44,8 @@ export default function Weather() {
       },
       () => {
         void loadFallback()
-      }
+      },
+      { timeout: 5000 }
     )
   }, [])
 

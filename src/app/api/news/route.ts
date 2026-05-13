@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CATEGORIES } from '@/lib/sources'
 import { getCached, getMeta, setCached } from '@/lib/cache'
-import { fetchCategory } from '@/lib/fetcher'
+import { fetchCategory, rehydrateAges } from '@/lib/fetcher'
 
 export const dynamic = 'force-dynamic'
 
-// In-memory lock — prevents multiple simultaneous live fetches for the same category
-// on cache miss (e.g. cold start with multiple concurrent users)
+// In-memory lock — on a warm serverless instance, coalesces concurrent requests
+// on cache miss into a single RSS fetch. Has no cross-instance effect on serverless.
 const inFlight = new Map<string, Promise<Awaited<ReturnType<typeof fetchCategory>>>>()
 
 export async function GET(req: NextRequest) {
@@ -22,15 +22,17 @@ export async function GET(req: NextRequest) {
   let items = await getCached(cat)
   const meta = await getMeta()
 
-  // Cache miss — fetch live, but only one fetch per category at a time
-  if (!items || items.length === 0) {
+  if (items && items.length > 0) {
+    // Recompute ageMinutes and breaking from publishedAt so stale cached values stay accurate
+    items = rehydrateAges(items)
+  } else {
     let promise = inFlight.get(cat)
     if (!promise) {
       promise = fetchCategory(valid).finally(() => inFlight.delete(cat))
       inFlight.set(cat, promise)
     }
     items = await promise
-    // Warm the cache so the next user gets Redis instead of another live fetch
+    // Warm the cache so the next request gets Redis instead of another live fetch
     setCached(cat, items).catch(() => {/* silently ignore Redis write failures */})
   }
 

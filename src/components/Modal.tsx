@@ -67,7 +67,7 @@ export default function Modal({ item, onClose }: Props) {
       className="modal-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label={item.headline}
+      aria-labelledby="modal-title"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="modal-box">
@@ -120,7 +120,7 @@ export default function Modal({ item, onClose }: Props) {
             </span>
           </div>
 
-          <h2 style={{
+          <h2 id="modal-title" style={{
             fontSize: 18, fontWeight: 500, color: 'var(--tx)',
             lineHeight: 1.4, marginBottom: 12,
           }}>

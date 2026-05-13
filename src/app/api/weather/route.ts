@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
-// Belt-and-suspenders: cache the upstream OWM fetch for 5 min at the route segment level too
-export const revalidate = 300
+// Upstream OWM fetch is cached for 5 min via next: { revalidate: 300 } on the fetch() call below
 
 const WX_ICONS: Record<string, string> = {
   '01': '☀', '02': '⛅', '03': '☁', '04': '☁',

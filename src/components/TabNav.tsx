@@ -22,6 +22,7 @@ export default function TabNav({ active, onChange }: Props) {
         return (
           <button
             key={cat.id}
+            type="button"
             onClick={() => onChange(cat.id)}
             style={{
               padding: '12px 16px',

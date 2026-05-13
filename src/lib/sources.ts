@@ -33,14 +33,10 @@ export const CATEGORIES: Category[] = [
     id: 'business',
     label: 'Business',
     feeds: [
-      // Primary: high-volume fresh feeds
-      { url: 'https://feeds.feedburner.com/ndtvnews-business', primary: true },
       { url: 'https://www.thehindu.com/business/feeder/default.rss', primary: true },
-      // Good Indian business coverage
-      { url: 'https://www.livemint.com/rss/money', primary: false },
+      { url: 'https://www.livemint.com/rss/money', primary: true },
       { url: 'https://economictimes.indiatimes.com/rssfeedstopstories.cms', primary: false },
       { url: 'https://feeds.reuters.com/reuters/businessNews', primary: false },
-      // Additional high-volume sources
       { url: 'https://timesofindia.indiatimes.com/business/rss.cms', primary: false },
       { url: 'https://www.moneycontrol.com/rss/business.xml', primary: false },
       { url: 'https://indianexpress.com/section/business/feed/', primary: false },
@@ -54,7 +50,7 @@ export const CATEGORIES: Category[] = [
       { url: 'https://feeds.arstechnica.com/arstechnica/index', primary: true },
       { url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', primary: false },
       { url: 'https://www.theverge.com/rss/index.xml', primary: false },
-      { url: 'https://feeds.feedburner.com/ndtvnews-tech', primary: false },
+      { url: 'https://www.wired.com/feed/rss', primary: false },
     ],
   },
   {
@@ -63,7 +59,6 @@ export const CATEGORIES: Category[] = [
     feeds: [
       { url: 'https://feeds.bbci.co.uk/sport/rss.xml', primary: true },
       { url: 'https://feeds.bbci.co.uk/sport/athletics/rss.xml', primary: true },
-      { url: 'https://feeds.feedburner.com/ndtvnews-sports', primary: false },
       { url: 'https://sportstar.thehindu.com/feed/', primary: false },
       { url: 'https://timesofindia.indiatimes.com/rss/4719148.cms', primary: false },
       { url: 'https://feeds.reuters.com/reuters/sportsNews', primary: false },
@@ -89,7 +84,6 @@ export const CATEGORIES: Category[] = [
     feeds: [
       { url: 'https://www.espncricinfo.com/rss/content/story/feeds/0.xml', primary: true },
       { url: 'https://feeds.bbci.co.uk/sport/cricket/rss.xml', primary: true },
-      { url: 'https://feeds.feedburner.com/ndtvnews-cricket', primary: false },
       { url: 'https://timesofindia.indiatimes.com/rss/4719165.cms', primary: false },
       { url: 'https://www.cricbuzz.com/cricket-news/rss-feeds', primary: false },
     ],

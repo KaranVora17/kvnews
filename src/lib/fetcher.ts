@@ -221,6 +221,13 @@ function markTrending(items: NewsItem[], allItems: NewsItem[]): NewsItem[] {
   }))
 }
 
+export function rehydrateAges(items: NewsItem[]): NewsItem[] {
+  return items.map(item => {
+    const age = ageMinutes(item.publishedAt)
+    return { ...item, ageMinutes: age, breaking: age <= 30 }
+  })
+}
+
 export async function fetchCategory(category: Category): Promise<NewsItem[]> {
   const primaries = category.feeds.filter(f => f.primary)
   const fallbacks = category.feeds.filter(f => !f.primary)
