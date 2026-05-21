@@ -1,8 +1,12 @@
 .next/
 node_modules/
-.env.local
 .env
-*.log
+.env.*
+!.env.example
+coverage/
 .DS_Store
+Thumbs.db
+*.local
+*.log
 dist/
 .vercel

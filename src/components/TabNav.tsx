@@ -8,21 +8,25 @@ type Props = {
 
 export default function TabNav({ active, onChange }: Props) {
   return (
-    <nav style={{
-      background: 'var(--sur)',
-      borderBottom: '1px solid var(--bdr)',
-      padding: '0 24px',
-      display: 'flex',
-      overflowX: 'auto',
-      scrollbarWidth: 'none',
-      transition: 'background 0.4s, border-color 0.4s',
-    }}>
+    <nav
+      className="site-nav"
+      style={{
+        background: 'var(--sur)',
+        borderBottom: '1px solid var(--bdr)',
+        padding: '0 24px',
+        display: 'flex',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        transition: 'background 0.4s, border-color 0.4s',
+      }}
+    >
       {CATEGORIES.map(cat => {
         const isActive = cat.id === active
         return (
           <button
             key={cat.id}
             type="button"
+            className={`site-nav-tab${isActive ? ' site-nav-tab--active' : ''}`}
             onClick={() => onChange(cat.id)}
             style={{
               padding: '12px 16px',

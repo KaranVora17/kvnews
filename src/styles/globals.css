@@ -46,10 +46,60 @@ html, body {
   --ti:     #C8D8F0;   /* bright so tabs are visible on dark */
 }
 
-/* ── Focus (keyboard) ───────────────────────────────────── */
-.theme-swatch:focus-visible {
+/* ── News cards ───────────────────────────────────────────── */
+.news-card {
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.news-card--hero {
+  border-radius: 10px;
+}
+
+.news-card--standard {
+  border-radius: 8px;
+}
+
+.news-card:hover {
+  border-color: var(--acc);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.news-card:focus-visible {
   outline: 2px solid var(--acc);
   outline-offset: 2px;
+}
+
+/* ── Loading animation ────────────────────────────────────── */
+@keyframes pulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40%           { opacity: 1;   transform: scale(1);   }
+}
+
+/* ── NewsFeed responsive layout ──────────────────────────── */
+@media (max-width: 768px) {
+  .tier1 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 600px) {
+  .news-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Responsive padding (scoped to named classes) ─────────── */
+@media (max-width: 600px) {
+  .site-header,
+  .site-nav,
+  .news-feed-container {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}
+
+/* ── Tab nav focus ────────────────────────────────────────── */
+.site-nav-tab:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: -2px;
 }
 
 /* ── Transitions ──────────────────────────────────────────── */
@@ -97,13 +147,8 @@ body {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* ── Responsive padding ───────────────────────────────────── */
-@media (max-width: 600px) {
-  header, nav, main > div {
-    padding-left: 14px;
-    padding-right: 14px;
-  }
-}
+/* ── Responsive padding — scoped to named classes, not broad element selectors ── */
+/* site-header, site-nav, news-feed-container classes are set in the components */
 
 /* ── Breaking banner ─────────────────────────────────────── */
 .breaking-banner {

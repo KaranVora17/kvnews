@@ -1,50 +1,20 @@
 import type { NextConfig } from 'next'
+import { FEED_IMAGE_DOMAINS } from './src/lib/sources'
+
+// Generate remotePatterns from the single source-of-truth list in sources.ts.
+// Each domain gets both a bare and a wildcard-subdomain pattern so that CDN
+// sub-hosts (e.g. ichef.bbci.co.uk, i.ndtvimg.com) are all covered.
+const remotePatterns = [
+  ...FEED_IMAGE_DOMAINS.flatMap(hostname => [
+    { protocol: 'https' as const, hostname },
+    { protocol: 'https' as const, hostname: `**.${hostname}` },
+  ]),
+  // Unsplash is used for category fallback images in NewsCard — not a feed CDN
+  { protocol: 'https' as const, hostname: 'images.unsplash.com' },
+]
 
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      // BBC
-      { protocol: 'https', hostname: 'ichef.bbci.co.uk' },
-      { protocol: 'https', hostname: '**.bbci.co.uk' },
-      // NDTV
-      { protocol: 'https', hostname: 'ndtvimg.com' },
-      { protocol: 'https', hostname: '**.ndtvimg.com' },
-      // The Hindu
-      { protocol: 'https', hostname: 'thgim.com' },
-      { protocol: 'https', hostname: '**.thgim.com' },
-      { protocol: 'https', hostname: '**.thehindu.com' },
-      // Indian Express
-      { protocol: 'https', hostname: 'imgci.com' },
-      { protocol: 'https', hostname: '**.indianexpress.com' },
-      // ESPN / Cricinfo
-      { protocol: 'https', hostname: 'espncdn.com' },
-      { protocol: 'https', hostname: '**.espncdn.com' },
-      { protocol: 'https', hostname: '**.espncricinfo.com' },
-      // Sky Sports
-      { protocol: 'https', hostname: '**.skysports.com' },
-      // Times of India
-      { protocol: 'https', hostname: 'toiimg.com' },
-      { protocol: 'https', hostname: '**.toiimg.com' },
-      // TechCrunch / Ars Technica
-      { protocol: 'https', hostname: '**.techcrunch.com' },
-      { protocol: 'https', hostname: 'arstechnica.net' },
-      { protocol: 'https', hostname: '**.arstechnica.net' },
-      // Al Jazeera
-      { protocol: 'https', hostname: '**.aljazeera.com' },
-      // Reuters
-      { protocol: 'https', hostname: '**.reuters.com' },
-      // Livemint
-      { protocol: 'https', hostname: '**.livemint.com' },
-      // Goal.com
-      { protocol: 'https', hostname: '**.goal.com' },
-      // The Verge / Wired / Guardian
-      { protocol: 'https', hostname: '**.theverge.com' },
-      { protocol: 'https', hostname: '**.wired.com' },
-      { protocol: 'https', hostname: '**.theguardian.com' },
-      // Unsplash (category fallback images)
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-    ],
-  },
+  images: { remotePatterns },
 }
 
 export default nextConfig

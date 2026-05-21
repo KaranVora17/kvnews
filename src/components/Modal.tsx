@@ -9,9 +9,12 @@ type Props = {
   onClose: () => void
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+
 export default function Modal({ item, onClose }: Props) {
   const [toast, setToast] = useState<string | null>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
   const previousFocus = useRef<Element | null>(null)
 
   // Save and restore focus for keyboard / screen-reader users
@@ -21,6 +24,26 @@ export default function Modal({ item, onClose }: Props) {
     return () => {
       (previousFocus.current as HTMLElement | null)?.focus?.()
     }
+  }, [])
+
+  // Focus trap — keep Tab/Shift-Tab inside the modal
+  useEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return
+      const elements = Array.from(box!.querySelectorAll<HTMLElement>(FOCUSABLE))
+      if (!elements.length) return
+      const first = elements[0]
+      const last = elements[elements.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    box.addEventListener('keydown', handleTab)
+    return () => box.removeEventListener('keydown', handleTab)
   }, [])
 
   // Close on Escape
@@ -70,7 +93,7 @@ export default function Modal({ item, onClose }: Props) {
       aria-labelledby="modal-title"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="modal-box">
+      <div className="modal-box" ref={boxRef}>
         {/* Full image — contain, no crop */}
         <div style={{
           width: '100%',

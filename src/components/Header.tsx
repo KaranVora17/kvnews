@@ -38,16 +38,19 @@ export default function Header() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <header style={{
-      background: 'var(--sur)',
-      borderBottom: '1px solid var(--bdr)',
-      padding: '14px 24px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '12px',
-      transition: 'background 0.4s, border-color 0.4s',
-    }}>
+    <header
+      className="site-header"
+      style={{
+        background: 'var(--sur)',
+        borderBottom: '1px solid var(--bdr)',
+        padding: '14px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+        transition: 'background 0.4s, border-color 0.4s',
+      }}
+    >
       {/* Brand */}
       <div>
         <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--acc)', letterSpacing: 5, textTransform: 'uppercase' }}>

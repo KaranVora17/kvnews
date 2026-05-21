@@ -47,24 +47,8 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
         type="button"
         aria-label={`Read story: ${item.headline}`}
         onClick={() => onClick(item)}
-        style={{
-          ...btnReset,
-          display: 'block',
-          background: 'var(--sur)',
-          border: '1px solid var(--bdr)',
-          borderRadius: 10,
-          overflow: 'hidden',
-          transition: 'border-color 0.2s, box-shadow 0.2s',
-          width: '100%',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.borderColor = 'var(--acc)'
-          e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.borderColor = 'var(--bdr)'
-          e.currentTarget.style.boxShadow = 'none'
-        }}
+        className="news-card news-card--hero"
+        style={{ ...btnReset, display: 'block', width: '100%' }}
       >
         <StoryImage
           src={img}
@@ -127,24 +111,8 @@ export default function NewsCard({ item, variant, onClick, category }: Props) {
       type="button"
       aria-label={`Read story: ${item.headline}`}
       onClick={() => onClick(item)}
-      style={{
-        ...btnReset,
-        display: 'flex',
-        alignItems: 'stretch',
-        background: 'var(--sur)',
-        border: '1px solid var(--bdr)',
-        borderRadius: 8,
-        overflow: 'hidden',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'var(--acc)'
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.07)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'var(--bdr)'
-        e.currentTarget.style.boxShadow = 'none'
-      }}
+      className="news-card news-card--standard"
+      style={{ ...btnReset, display: 'flex', alignItems: 'stretch' }}
     >
       {/* Text left */}
       <div style={{

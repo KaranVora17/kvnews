@@ -14,5 +14,6 @@ export async function GET(req: NextRequest) {
   }
 
   const result = await runRefresh()
-  return NextResponse.json({ success: true, ...result })
+  const success = result.errors.length === 0
+  return NextResponse.json({ success, ...result })
 }

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { NewsItem } from '@/lib/fetcher'
 import NewsCard from './NewsCard'
 import Modal from './Modal'
@@ -23,6 +23,19 @@ function formatUpdatedLabel(lastUpdatedIso?: string, fetchedAtIso?: string): str
   })
 }
 
+const DISMISSED_KEY = 'kvnews-dismissed-breaking'
+
+function getDismissed(): Set<string> {
+  try {
+    const raw = sessionStorage.getItem(DISMISSED_KEY)
+    return new Set(raw ? JSON.parse(raw) as string[] : [])
+  } catch { return new Set() }
+}
+
+function saveDismissed(ids: Set<string>) {
+  try { sessionStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids])) } catch {}
+}
+
 export default function NewsFeed({ category }: Props) {
   const [items, setItems]         = useState<NewsItem[]>([])
   const [loading, setLoading]     = useState(true)
@@ -31,12 +44,19 @@ export default function NewsFeed({ category }: Props) {
   const [modal, setModal]         = useState<NewsItem | null>(null)
   const [breaking, setBreaking]   = useState<NewsItem | null>(null)
   const [dismissed, setDismissed] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   const load = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setLoading(true)
     setLoadError(null)
     try {
-      const res = await fetch(`/api/news?cat=${encodeURIComponent(category)}`)
+      const res = await fetch(`/api/news?cat=${encodeURIComponent(category)}`, {
+        signal: controller.signal,
+      })
       const data = await res.json() as {
         items?: NewsItem[]
         meta?: CacheMeta | null
@@ -50,11 +70,12 @@ export default function NewsFeed({ category }: Props) {
       }
       setItems(data.items || [])
       setUpdatedAt(formatUpdatedLabel(data.meta?.lastUpdated, data.fetchedAt))
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       setLoadError('Network error. Check your connection and try again.')
       setItems([])
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [category])
 
@@ -62,11 +83,14 @@ export default function NewsFeed({ category }: Props) {
     setDismissed(false)
     setBreaking(null)
     void load()
+    return () => abortRef.current?.abort()
   }, [category, load])
 
   useEffect(() => {
     if (loading || dismissed) return
-    setBreaking(items.find(i => i.breaking) ?? null)
+    const dismissedIds = getDismissed()
+    const breakingItem = items.find(i => i.breaking && !dismissedIds.has(i.id))
+    setBreaking(breakingItem ?? null)
   }, [items, dismissed, loading])
 
   if (loading) return (
@@ -80,7 +104,6 @@ export default function NewsFeed({ category }: Props) {
           }} />
         ))}
       </div>
-      <style>{`@keyframes pulse{0%,80%,100%{opacity:0.3;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}`}</style>
     </div>
   )
 
@@ -114,11 +137,17 @@ export default function NewsFeed({ category }: Props) {
         <BreakingBanner
           item={breaking}
           onClick={setModal}
-          onDismiss={() => { setDismissed(true); setBreaking(null) }}
+          onDismiss={() => {
+            const ids = getDismissed()
+            ids.add(breaking.id)
+            saveDismissed(ids)
+            setDismissed(true)
+            setBreaking(null)
+          }}
         />
       )}
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px 40px' }}>
+      <div className="news-feed-container" style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px 40px' }}>
         <div style={{ fontSize: 11, color: 'var(--mu)', marginBottom: 16 }}>
           Updated {updatedAt}
         </div>
@@ -160,15 +189,6 @@ export default function NewsFeed({ category }: Props) {
       </div>
 
       {modal && <Modal item={modal} onClose={() => setModal(null)} />}
-
-      <style>{`
-        @media (max-width: 768px) {
-          .tier1 { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 600px) {
-          .news-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </>
   )
 }

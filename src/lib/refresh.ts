@@ -2,14 +2,28 @@ import { CATEGORIES } from './sources'
 import { fetchCategory } from './fetcher'
 import { setCached, setMeta } from './cache'
 
-export async function runRefresh(): Promise<{ counts: Record<string, number>; refreshedAt: string }> {
-  const results: Record<string, number> = {}
+export type RefreshResult = {
+  counts: Record<string, number>
+  errors: { category: string; error: string }[]
+  refreshedAt: string
+}
+
+export async function runRefresh(): Promise<RefreshResult> {
+  const counts: Record<string, number> = {}
+  const errors: { category: string; error: string }[] = []
 
   await Promise.all(
     CATEGORIES.map(async (cat) => {
-      const items = await fetchCategory(cat)
-      await setCached(cat.id, items)
-      results[cat.id] = items.length
+      try {
+        const items = await fetchCategory(cat)
+        await setCached(cat.id, items)
+        counts[cat.id] = items.length
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error(`[refresh] category ${cat.id} failed: ${message}`)
+        errors.push({ category: cat.id, error: message })
+        counts[cat.id] = 0
+      }
     })
   )
 
@@ -19,5 +33,5 @@ export async function runRefresh(): Promise<{ counts: Record<string, number>; re
     nextUpdate: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
   })
 
-  return { counts: results, refreshedAt: now.toISOString() }
+  return { counts, errors, refreshedAt: now.toISOString() }
 }

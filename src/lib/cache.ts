@@ -28,7 +28,8 @@ export async function getCached(category: string): Promise<NewsItem[] | null> {
   if (!client) return null
   try {
     return await client.get<NewsItem[]>(KEY(category))
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') console.error(`[cache] getCached(${category}) failed:`, err)
     return null
   }
 }
@@ -39,8 +40,8 @@ export async function setCached(category: string, items: NewsItem[]): Promise<vo
   try {
     // TTL 90 minutes — safety net if cron skips a run
     await client.set(KEY(category), items, { ex: 5400 })
-  } catch {
-    // Silently fail — frontend falls back to live fetch
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') console.error(`[cache] setCached(${category}) failed:`, err)
   }
 }
 
@@ -49,7 +50,8 @@ export async function getMeta(): Promise<CacheMeta | null> {
   if (!client) return null
   try {
     return await client.get<CacheMeta>(META_KEY)
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') console.error('[cache] getMeta() failed:', err)
     return null
   }
 }
@@ -59,5 +61,7 @@ export async function setMeta(meta: CacheMeta): Promise<void> {
   if (!client) return
   try {
     await client.set(META_KEY, meta, { ex: 7200 })
-  } catch {}
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') console.error('[cache] setMeta() failed:', err)
+  }
 }

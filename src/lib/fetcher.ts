@@ -1,6 +1,6 @@
 import { XMLParser } from 'fast-xml-parser'
 import he from 'he'
-import { Category } from './sources'
+import { Category, FEED_IMAGE_DOMAINS } from './sources'
 
 // FNV-1a 32-bit hash — stable, collision-resistant story ID from URL
 function fnv1a(str: string): string {
@@ -124,13 +124,7 @@ function extractImage(item: Record<string, unknown>): string | null {
   const match = desc.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))[^"']*["']/i)
   if (match) {
     const url = match[1]
-    const allowed = [
-      'ichef.bbci.co.uk', 'ndtvimg.com', 'thgim.com', 'imgci.com',
-      'espncricinfo.com', 'skysports.com', 'espncdn.com', 'toiimg.com',
-      'techcrunch.com', 'arstechnica.net', 'aljazeera.com', 'reuters.com',
-      'livemint.com', 'indianexpress.com', 'goal.com',
-    ]
-    if (allowed.some(domain => url.includes(domain))) return https(url)
+    if (FEED_IMAGE_DOMAINS.some(domain => url.includes(domain))) return https(url)
   }
 
   return null
@@ -156,12 +150,18 @@ function ageMinutes(dateStr: string): number {
 }
 
 async function fetchFeed(url: string): Promise<NewsItem[]> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 8000)
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'KVNews/1.0 RSS Reader' },
       next: { revalidate: 0 },
+      signal: controller.signal,
     })
-    if (!res.ok) return []
+    if (!res.ok) {
+      console.warn(`[fetcher] feed ${url} returned ${res.status}`)
+      return []
+    }
     const xml = await res.text()
     const data = parser.parse(xml)
 
@@ -191,16 +191,24 @@ async function fetchFeed(url: string): Promise<NewsItem[]> {
         breaking: age <= 30,
       }
     }).filter(i => i.headline.length > 10)
-  } catch {
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    console.warn(`[fetcher] failed to fetch ${url}: ${reason}`)
     return []
+  } finally {
+    clearTimeout(timeout)
   }
+}
+
+function normalizeHeadlineKey(headline: string): string {
+  return headline.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)
 }
 
 function dedup(items: NewsItem[]): NewsItem[] {
   const seen = new Set<string>()
   const result: NewsItem[] = []
   for (const item of items) {
-    const key = item.headline.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)
+    const key = normalizeHeadlineKey(item.headline)
     if (!seen.has(key)) {
       seen.add(key)
       result.push(item)
@@ -212,12 +220,12 @@ function dedup(items: NewsItem[]): NewsItem[] {
 function markTrending(items: NewsItem[], allItems: NewsItem[]): NewsItem[] {
   const counts = new Map<string, number>()
   for (const item of allItems) {
-    const key = item.headline.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)
+    const key = normalizeHeadlineKey(item.headline)
     counts.set(key, (counts.get(key) || 0) + 1)
   }
   return items.map(item => ({
     ...item,
-    trending: (counts.get(item.headline.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)) || 0) >= 2,
+    trending: (counts.get(normalizeHeadlineKey(item.headline)) || 0) >= 2,
   }))
 }
 
@@ -232,9 +240,9 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
   const primaries = category.feeds.filter(f => f.primary)
   const fallbacks = category.feeds.filter(f => !f.primary)
 
-  // Fresh = has image AND within 23 hours
+  // Fresh = within 23 hours (image no longer required — NewsCard handles fallbacks)
   const fresh = (items: NewsItem[]) =>
-    items.filter(i => i.image !== null && i.ageMinutes <= MAX_AGE_MINUTES)
+    items.filter(i => i.ageMinutes <= MAX_AGE_MINUTES)
 
   // Always fetch all primaries
   const primaryResults = await Promise.all(primaries.map(f => fetchFeed(f.url)))
@@ -259,7 +267,7 @@ export async function fetchCategory(category: Category): Promise<NewsItem[]> {
   const withTrending = markTrending(deduped, allItems)
 
   return withTrending
-    .filter(item => item.image !== null && item.ageMinutes <= MAX_AGE_MINUTES)
+    .filter(item => item.ageMinutes <= MAX_AGE_MINUTES)
     .sort((a, b) => a.ageMinutes - b.ageMinutes)  // freshest first always
     .slice(0, 14)
 }

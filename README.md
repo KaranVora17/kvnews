@@ -10,21 +10,18 @@ Your current briefing. Clean, fast, hourly-updated news across 7 categories.
 
 ---
 
-## Setup in Cursor
+## Setup
 
-1. **Unzip** this folder and open it in Cursor
-2. **Install dependencies**
-   ```bash
+1. **Install dependencies**
+   ```
    npm install
    ```
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   ```
-   Then fill in `.env.local` (see below)
+2. **Set up environment variables**
 
-4. **Run locally**
-   ```bash
+   Copy `.env.example` to `.env.local` (Windows: `copy .env.example .env.local`, Mac/Linux: `cp .env.example .env.local`) then fill in the values.
+
+3. **Run locally**
+   ```
    npm run dev
    ```
    Open [http://localhost:3000](http://localhost:3000)
@@ -43,7 +40,8 @@ Your current briefing. Clean, fast, hourly-updated news across 7 categories.
 1. Sign up free at [openweathermap.org](https://openweathermap.org/api)
 2. Get your API key (free tier: 1,000 calls/day — plenty)
 3. Add to `.env.local` as `OPENWEATHER_API_KEY`
-4. Also add as `NEXT_PUBLIC_OPENWEATHER_KEY` (needed client-side for weather widget)
+
+The weather widget calls `/api/weather` (a server-side proxy) — the key is never exposed to the browser.
 
 ### Cron Secret
 - Make up any random string (e.g. `mySuperSecret123`)
